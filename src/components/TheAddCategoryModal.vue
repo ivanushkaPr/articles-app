@@ -133,7 +133,7 @@ export default {
       this.articlesSelectedOptions.splice(selectedOptionIndex, 1);
     },
     onCloseModal() {
-      this.$store.commit('closeAddCategoryModal');
+      this.$store.commit('modal/close');
     },
     onSubmitForm() {
       this.lastAction = 'formSubmitted';
@@ -146,12 +146,12 @@ export default {
           articles: this.articlesSelectedOptions,
         });
         localStorage.setItem('categories', JSON.stringify(this.$store.state.categories));
-        this.$store.commit('closeAddCategoryModal');
+        this.$store.commit('modal/close');
       }
     },
     onCloseModalViaKeyboard(e) {
       if (e.code === 'Escape') {
-        this.$store.commit(' closeAddCategoryModal');
+        this.$store.commit('modal/close');
       }
     },
   },

@@ -7,8 +7,6 @@ export default new Vuex.Store({
   state: {
     articles: [],
     categories: [],
-    // add category modal window
-    isAddCategoryModalVisible: true,
   },
   mutations: {
     setArticles(state, articles) {
@@ -20,15 +18,23 @@ export default new Vuex.Store({
     addCategory(state, payload) {
       state.categories.push(payload);
     },
-    closeAddCategoryModal(state) {
-      state.isAddCategoryModalVisible = false;
-    },
-    openAddCategoryModal(state) {
-      state.isAddCategoryModalVisible = true;
-    },
   },
   actions: {
   },
   modules: {
+    modal: {
+      namespaced: true,
+      state: {
+        isVisible: false,
+      },
+      mutations: {
+        close(state) {
+          state.isVisible = false;
+        },
+        open(state) {
+          state.isVisible = true;
+        },
+      },
+    },
   },
 });

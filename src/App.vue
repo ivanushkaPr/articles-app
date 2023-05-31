@@ -3,7 +3,7 @@
     <div v-if="isArticlesDownloaded">
       <the-header/>
       <the-stub/>
-      <the-add-category-modal v-if="this.$store.state.isAddCategoryModalVisible"/>
+      <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
     </div>
     <preloader v-else/>
   </div>

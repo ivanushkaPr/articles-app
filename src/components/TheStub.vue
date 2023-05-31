@@ -11,7 +11,8 @@
 export default {
   methods: {
     onOpenModal() {
-      this.$store.commit('openAddCategoryModal');
+      debugger;
+      this.$store.commit('modal/open');
     },
   },
 };
