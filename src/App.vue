@@ -1,20 +1,52 @@
 <template>
   <div id="app">
     <div v-if="isArticlesDownloaded">
-      {{this.$store.state.articles}}
+      <the-header/>
+      <the-stub/>
+      <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
     </div>
-    <Preloader v-else/>
+    <preloader v-else/>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex';
+import TheHeader from './components/TheHeader.vue';
+import TheStub from './components/TheStub.vue';
+import TheAddCategoryModal from './components/TheAddCategoryModal.vue';
 import Preloader from './components/Preloader.vue';
 
 export default {
   name: 'App',
   components: {
+    TheHeader,
+    TheStub,
+    TheAddCategoryModal,
     Preloader,
+  },
+  data() {
+    return {
+      text: '',
+    };
+  },
+  methods: {
+    restoreStore() {
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      if (categories) {
+        this.$store.commit('setCategories', categories);
+      }
+    },
+    async getArticles() {
+      const response = await fetch('articles.json');
+      if (response.ok) {
+        const json = await response.json();
+        setTimeout(() => {
+          this.$store.commit('setArticles', json);
+        }, 2000);
+      } else {
+        alert(`Ошибка HTTP: ${response.status}`);
+      }
+    },
   },
   computed: {
     ...mapState({
@@ -22,16 +54,8 @@ export default {
     }),
   },
   async mounted() {
-    debugger;
-    const response = await fetch('articles.json');
-    if (response.ok) {
-      const json = await response.json();
-      setTimeout(() => {
-        this.$store.commit('setArticles', json);
-      }, 2000);
-    } else {
-      alert(`Ошибка HTTP: ${response.status}`);
-    }
+    this.getArticles();
+    this.restoreStore();
   },
 };
 </script>
@@ -39,14 +63,13 @@ export default {
 <style lang="scss">
 body {
   margin: 0px;
+  font-family: 'Montserrat';
+  font-style: normal;
 }
 
 #app {
   width: 100vw;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .preloader {
