@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 import { debounce } from 'lodash';
 
 import {
@@ -64,10 +64,10 @@ export default {
       categoryName: '',
       selectedParent: '',
       selectedParentErrorMessage: 'Нет такой категории',
-      parentOptions: ['first', 'second', 'someone', 'help me', 'again'],
+      parentOptions: [],
       searchQuery: '',
       selectedArticlesError: false,
-      articlesOptions: ['Статья 1', 'Статья 2', 'Статья 3', 'Статья 4', 'Статья 5'],
+      articlesOptions: [],
       articlesSelectedOptions: [],
       isOptionAdded: false,
       isSubmitted: false,
@@ -135,16 +135,65 @@ export default {
     onCloseModal() {
       this.$store.commit('modal/close');
     },
+    findCategory(categories, name) {
+      return this.iterateCategories(categories, name);
+    },
+    iterateCategories(categories, name) {
+      let target = null;
+      for (let counter = 0; counter < categories.length; counter += 1) {
+        const category = categories[counter];
+        if (category.name === name) {
+          target = category;
+          break;
+        }
+
+        if (category.children.length > 0) {
+          target = this.iterateCategories(category.children, name);
+        }
+      }
+      return target;
+    },
+    marArticlesNamesToId(articleNames) {
+      return articleNames.map((articleName) => {
+        const data = this.$store.state.articles.find((article) => article.headline === articleName);
+        return data.id;
+      });
+    },
+    createNewCategory() {
+      return {
+        name: this.categoryName,
+        articlesIds: this.marArticlesNamesToId(this.articlesSelectedOptions),
+        children: [],
+      };
+    },
+    getCategories() {
+      return this.$store.getters.getCategories;
+    },
+    copyObject(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    },
+    insertCategory(categories, category) {
+      const categoriesCopy = this.copyObject(categories);
+
+      if (this.selectedParent) {
+        const parent = this.findCategory(categoriesCopy, this.selectedParent);
+        parent.children.push(category);
+      } else {
+        categoriesCopy.push(category);
+        categoriesCopy.sort();
+      }
+      return categoriesCopy;
+    },
+
     onSubmitForm() {
       this.lastAction = 'formSubmitted';
       this.$v.$touch();
 
       if (!this.$v.$invalid) {
-        this.$store.commit('addCategory', {
-          name: this.categoryName,
-          parent: this.selectedParent,
-          articles: this.articlesSelectedOptions,
-        });
+        const newCategory = this.createNewCategory();
+        const newCategories = this.copyObject(this.getCategories());
+        const newCategoriesAfterInsertion = this.insertCategory(newCategories, newCategory);
+        this.addNewCategory(newCategoriesAfterInsertion);
         localStorage.setItem('categories', JSON.stringify(this.$store.state.categories));
         this.$store.commit('modal/close');
       }
@@ -154,6 +203,16 @@ export default {
         this.$store.commit('modal/close');
       }
     },
+    getCategoryNames(categories, storage) {
+      return categories.reduce((acc, cur) => {
+        acc.push(cur.name);
+        if (cur.children.length) {
+          this.getCategoryNames(cur.children, acc);
+        }
+        return acc;
+      }, storage);
+    },
+    ...mapActions(['addNewCategory']),
   },
   computed: {
     ...mapState({
@@ -225,6 +284,12 @@ export default {
       },
       immediate: true,
     },
+    '$store.state.categories': {
+      handler(newCategories) {
+        this.parentOptions = this.getCategoryNames(newCategories, []);
+      },
+      immediate: true,
+    },
   },
 };
 </script>
@@ -234,7 +299,8 @@ export default {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100vw;
+    z-index: 1;
+    width: 100%;
     height: 100vh;
     background-color: rgba(10, 14, 32, 0.4);
   }
