@@ -77,6 +77,7 @@ export default {
       this.isOpened = false;
     },
     onInputClicked() {
+      debugger;
       this.isOpened = !this.isOpened;
     },
   },

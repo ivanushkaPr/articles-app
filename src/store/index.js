@@ -5,21 +5,87 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    categoriesPerPage: 3,
     articles: [],
-    categories: [],
+    categories: [{
+      name: 'Категория 1',
+      articlesIds: [1, 2, 3, 4],
+      children: [{
+        name: 'Подкатегория 1',
+        articlesIds: [4, 5, 6],
+        children: [
+          {
+            name: 'Подкатегория подкатегории 1',
+            articlesIds: [7, 8, 9],
+            children: [],
+          },
+          {
+            name: 'Подкатегория подкатегории 2',
+            articlesIds: [7, 8, 9],
+            children: [],
+          },
+        ],
+      }, {
+        name: 'Подкатегория 2',
+        articlesIds: [4, 5, 6],
+        children: [],
+      }],
+    }, {
+      name: 'Категория 2',
+      articlesIds: [1, 2, 3, 4],
+      children: [],
+    }, {
+      name: 'Категория 3',
+      articlesIds: [1, 2, 3, 4],
+      children: [],
+    }, {
+      name: 'Категория 4',
+      articlesIds: [1, 2, 3, 4],
+      children: [],
+    }],
   },
   mutations: {
     setArticles(state, articles) {
-      state.articles = articles;
+      state.articles = articles.map((article) => {
+        const newArticle = { ...article };
+        newArticle.isLiked = false;
+        return newArticle;
+      });
     },
     setCategories(state, categories) {
       state.categories = categories;
     },
-    addCategory(state, payload) {
-      state.categories.push(payload);
+    addLike(state, index) {
+      const newArticle = JSON.parse(JSON.stringify(state.articles[index]));
+      newArticle.likes += 1;
+      newArticle.isLiked = true;
+      state.articles.splice(index, 1, newArticle);
+    },
+    removeLike(state, index) {
+      const newArticle = JSON.parse(JSON.stringify(state.articles[index]));
+      newArticle.likes -= 1;
+      newArticle.isLiked = false;
+      state.articles.splice(index, 1, newArticle);
+    },
+  },
+  getters: {
+    isArticlesDownloaded(state) {
+      return state.articles.length;
+    },
+    isCategoriesAdded(state) {
+      return state.categories.length;
+    },
+    getCategories(state) {
+      return state.categories;
+    },
+    getCategoriesPerPage(state) {
+      return state.categoriesPerPage;
     },
   },
   actions: {
+    addNewCategory(context, newCategories) {
+      context.commit('setCategories', newCategories);
+    },
   },
   modules: {
     modal: {

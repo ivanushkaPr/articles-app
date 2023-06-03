@@ -1,5 +1,5 @@
 <template>
-  <header class="header">
+  <header class="header mb-48px">
     <base-action-button class="mr-16px" text="Создать категорию"
                         :is-add-button="true"
     @onButtonClicked="onOpenModal"/>
@@ -28,11 +28,7 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
-  max-width: 1236px;
   align-items: center;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0px 40px;
   padding-top: 40px;
 }
 
