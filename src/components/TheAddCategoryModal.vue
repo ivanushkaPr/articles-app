@@ -1,6 +1,8 @@
 <template>
-  <form class="the-add-category-modal" @submit.prevent="onSubmitForm">
-    <div class="the-add-category-modal__window">
+  <form ref="self"
+        class="the-add-category-modal"
+        @submit.prevent="onSubmitForm">
+    <div class="the-add-category-modal__window" v-click-outside="onCloseModal">
       <h2 class="the-add-category-modal__headline"> Новая категория </h2>
       <base-input class="mb-16px"
                   legend="Название"
@@ -47,6 +49,9 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import { debounce } from 'lodash';
+import vClickOutside from 'v-click-outside';
+import findCategory from '../mixins/findCategory';
+import toggleBodyOverflow from '../mixins/toggleBodyOverflow';
 
 import {
   isNotEmpty,
@@ -59,6 +64,10 @@ import {
 } from '../validators';
 
 export default {
+  directives: {
+    clickOutside: vClickOutside.directive,
+  },
+  mixins: [findCategory, toggleBodyOverflow],
   data() {
     return {
       categoryName: '',
@@ -133,25 +142,8 @@ export default {
       this.articlesSelectedOptions.splice(selectedOptionIndex, 1);
     },
     onCloseModal() {
+      this.$store.commit('deleteEditedCategory');
       this.$store.commit('modal/close');
-    },
-    findCategory(categories, name) {
-      return this.iterateCategories(categories, name);
-    },
-    iterateCategories(categories, name) {
-      let target = null;
-      for (let counter = 0; counter < categories.length; counter += 1) {
-        const category = categories[counter];
-        if (category.name === name) {
-          target = category;
-          break;
-        }
-
-        if (category.children.length > 0) {
-          target = this.iterateCategories(category.children, name);
-        }
-      }
-      return target;
     },
     marArticlesNamesToId(articleNames) {
       return articleNames.map((articleName) => {
@@ -176,8 +168,8 @@ export default {
       const categoriesCopy = this.copyObject(categories);
 
       if (this.selectedParent) {
-        const parent = this.findCategory(categoriesCopy, this.selectedParent);
-        parent.children.push(category);
+        const categoryData = this.findCategory(categoriesCopy, this.selectedParent);
+        categoryData.category.children.push(category);
       } else {
         categoriesCopy.push(category);
         categoriesCopy.sort();
@@ -272,9 +264,12 @@ export default {
   },
   mounted() {
     window.addEventListener('keypress', this.onCloseModalViaKeyboard);
+    this.toggleBodyOverflow();
+    this.$refs.self.style.top = `${window.pageYOffset}px`;
   },
   beforeDestroy() {
     window.removeEventListener('keypress', this.onCloseModalViaKeyboard);
+    this.toggleBodyOverflow();
   },
   watch: {
     '$store.state.articles': {
@@ -287,6 +282,20 @@ export default {
     '$store.state.categories': {
       handler(newCategories) {
         this.parentOptions = this.getCategoryNames(newCategories, []);
+      },
+      immediate: true,
+    },
+    '$store.state.editedCategory': {
+      handler(newEditedCategory) {
+        if (newEditedCategory === null) {
+          return;
+        }
+        this.categoryName = newEditedCategory?.category?.name;
+        this.selectedParent = newEditedCategory?.parent?.name || '';
+        const { articles } = this.$store.state;
+        this.articlesSelectedOptions = newEditedCategory.category.articlesIds.map((id) => {
+          return articles[id - 1].headline;
+        });
       },
       immediate: true,
     },
@@ -303,6 +312,7 @@ export default {
     width: 100%;
     height: 100vh;
     background-color: rgba(10, 14, 32, 0.4);
+    overflow-y: scroll;
   }
   .the-add-category-modal__window {
     display: flex;

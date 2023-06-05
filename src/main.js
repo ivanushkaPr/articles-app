@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Vuelidate from 'vuelidate';
+import vClickOutside from 'v-click-outside';
 import App from './App.vue';
 import store from './store';
 import BaseActionButton from './UI/BaseActionButton.vue';
@@ -12,6 +13,7 @@ import BaseEditButton from './UI/BaseEditButton.vue';
 import BasePagination from './UI/BasePagination.vue';
 
 Vue.use(Vuelidate);
+Vue.use(vClickOutside);
 Vue.component('BaseActionButton', BaseActionButton);
 Vue.component('BaseInput', BaseInput);
 Vue.component('BaseSelect', BaseSelect);

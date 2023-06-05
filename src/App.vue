@@ -3,6 +3,7 @@
     <div v-if="isArticlesDownloaded" class="wrapper">
       <div class="content">
         <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
+        <the-delete-category-modal v-if="this.$store.state.deleteModal.isVisible"/>
         <the-header/>
         <div v-if="isCategoriesAdded">
           <category-list v-for="(categorie, index) in renderedCategoriesData"
@@ -33,6 +34,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import TheAddCategoryModal from './components/TheAddCategoryModal.vue';
+import TheDeleteCategoryModal from './components/TheDeleteCategoryModal.vue';
 import TheHeader from './components/TheHeader.vue';
 import TheStub from './components/TheStub.vue';
 import CategoryList from './components/CategoryList.vue';
@@ -42,6 +44,7 @@ export default {
   name: 'App',
   components: {
     TheAddCategoryModal,
+    TheDeleteCategoryModal,
     TheHeader,
     TheStub,
     CategoryList,
@@ -80,11 +83,26 @@ export default {
     onIncrementPageCounter() {
       this.currentPage += 1;
     },
+    collectRenderedCategories(newCurrentPage) {
+      // При загрузке страницы функция сработает дважды.
+      // Необходимо добавить флаг или debounce, чтобы оно не запускалось дважды через watch - ы.
+      // Тем не менее накладные расходы очень низкие(3 итерации),
+      // поэтому считаю данную оптимизацию чрезмерной.
+      let start = (newCurrentPage - 1) * 3;
+      const end = newCurrentPage * this.$store.state.categoriesPerPage;
+      const renderedCategories = [];
+      for (; start < end; start += 1) {
+        const category = this.$store.state.categories[start];
+        if (!category) {
+          break;
+        }
+        renderedCategories.push(category);
+      }
+
+      this.renderedCategoriesData = renderedCategories;
+    },
   },
   computed: {
-    lastCategoryIndex() {
-      return this.currentPage * this.$store.state.categoriesPerPage;
-    },
     ...mapGetters([
       'isArticlesDownloaded',
       'isCategoriesAdded',
@@ -96,23 +114,14 @@ export default {
     '$store.state.categories': {
       handler(newCategories) {
         this.numberOfPages = Math.ceil(newCategories.length / this.$store.state.categoriesPerPage);
+        this.collectRenderedCategories(this.currentPage);
       },
       immediate: true,
+      deep: true,
     },
     currentPage: {
       handler(newCurrentPage) {
-        let start = (newCurrentPage - 1) * 3;
-        const end = newCurrentPage * this.$store.state.categoriesPerPage;
-        const renderedCategories = [];
-        for (; start < end; start += 1) {
-          const category = this.$store.state.categories[start];
-          if (!category) {
-            break;
-          }
-          renderedCategories.push(category);
-        }
-
-        this.renderedCategoriesData = renderedCategories;
+        this.collectRenderedCategories(newCurrentPage);
       },
       immediate: true,
     },
@@ -134,6 +143,11 @@ html,
 body {
   height: 100%;
 }
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
 .wrapper {
   display: flex;
   flex-direction: column;

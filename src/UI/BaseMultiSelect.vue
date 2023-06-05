@@ -1,5 +1,5 @@
 <template>
-  <section class="base-multi-select">
+  <section v-click-outside="onCloseDropdown" class="base-multi-select">
     <label class="base-multi-select__label">
       <legend class="base-multi-select__legend" :class="{
       'base-multi-select__legend_decrease-legend': focused | isNotEmpty | isInputNotCorrect
@@ -42,7 +42,12 @@
 </template>
 
 <script>
+import vClickOutside from 'v-click-outside';
+
 export default {
+  directives: {
+    clickOutside: vClickOutside.directive,
+  },
   props: {
     legend: {
       type: String,
@@ -93,17 +98,20 @@ export default {
     },
     onEnterPressed(event) {
       this.$emit('option-selected', event.target.value);
-      this.isOpened = false;
+      this.onCloseDropdown();
     },
     onOptionClicked(optionName) {
       this.$emit('option-selected', optionName);
-      this.isOpened = false;
+      this.onCloseDropdown();
     },
     onInputClicked() {
       this.isOpened = !this.isOpened;
     },
     onDeleteOption(optionName) {
       this.$emit('option-deleted', optionName);
+    },
+    onCloseDropdown() {
+      this.isOpened = false;
     },
   },
   computed: {
@@ -256,6 +264,11 @@ export default {
   font-size: 14px;
   line-height: 22px;
   color: hsla(4, 87%, 55%, 1);
+}
+
+.base-multiselect__selected-options {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .base-multiselect__selected-option {

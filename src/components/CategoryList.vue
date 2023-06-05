@@ -6,13 +6,29 @@
         <sup class="category-list__counter">({{getArticlesCounter}})</sup>
       </div>
       <div class="category-list__controls">
-        <button class="category-list__button-opener mr-26px"
-                :class="{'rotate-180-deg': isOpened}"
+        <button class="category-list__button-opener mr-16px"
+                :class="{ 'rotate-180-deg': isOpened }"
                 @click="onToggleArticlesVisibility"></button>
-        <div class="category-list__burger-menu">
-          <span class="category-list__menu-dot"></span>
-          <span class="category-list__menu-dot"></span>
-          <span class="category-list__menu-dot"></span>
+        <div class="category-list__edit-block">
+          <div class="category-list__burger-menu"
+               @click="onToggleEditMenu"
+               v-click-outside="onClickOutsideEditMenu"
+          >
+            <span class="category-list__menu-dot"></span>
+            <span class="category-list__menu-dot"></span>
+            <span class="category-list__menu-dot"></span>
+          </div>
+          <ul class="category-list__edit-list"
+              :class="{'category-list__edit-list_hidden': !isEditMenuShowed}">
+            <li class="category-list__edit-list-item"
+                @click="onOpenModal">
+              Редактировать
+            </li>
+            <li class="category-list__edit-list-item"
+                @click="onOpenDeleteCategoryModal">
+              Удалить
+            </li>
+          </ul>
         </div>
       </div>
     </header>
@@ -32,11 +48,17 @@
   </ul>
 </template>
 <script>
-
+import { mapActions } from 'vuex';
+import vClickOutside from 'v-click-outside';
+import findCategory from '../mixins/findCategory';
 import CategoryListArticle from './CategoryListArticle.vue';
 
 export default {
   name: 'CategoryList',
+  mixins: [findCategory],
+  directives: {
+    clickOutside: vClickOutside.directive,
+  },
   props: {
     name: {
       type: String,
@@ -70,14 +92,34 @@ export default {
   data() {
     return {
       isOpened: this.open,
+      isEditMenuShowed: false,
     };
   },
   methods: {
+    ...mapActions(['modal/openModal', 'setEditedCategory', 'deleteModal/openModal']),
+    onOpenModal() {
+      const selectedCategory = this.findCategory(this.$store.state.categories, this.name);
+      this.setEditedCategory(selectedCategory);
+      this.onToggleEditMenu();
+      this['modal/openModal']();
+    },
+    onToggleEditMenu() {
+      this.isEditMenuShowed = !this.isEditMenuShowed;
+    },
     onToggleArticlesVisibility() {
       this.isOpened = !this.isOpened;
     },
     getArticleById(id) {
       return this.$store.state.articles[id - 1];
+    },
+    onOpenDeleteCategoryModal() {
+      const selectedCategory = this.findCategory(this.$store.state.categories, this.name);
+      this.setEditedCategory(selectedCategory);
+      this.onToggleEditMenu();
+      this['deleteModal/openModal']();
+    },
+    onClickOutsideEditMenu() {
+      this.isEditMenuShowed = false;
     },
   },
   computed: {
@@ -100,9 +142,6 @@ export default {
         this.isOpened = newValue;
       }
     },
-  },
-  beforeUpdate() {
-    console.log('CategoryList [beforeUpdate]');
   },
 };
 </script>
@@ -183,13 +222,60 @@ export default {
   transition-property: transform;
 }
 
+.category-list__edit-block {
+  position: relative;
+}
+
 .category-list__burger-menu {
-  display: block;
-  padding: 0px;
-  background-color: transparent;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 24px;
+  padding: 0px;
   background-color: transparent;
+}
+
+.category-list__edit-list {
+  top: 20px;
+  left: -156px;
+  position: absolute;
+  z-index: 1;
+  padding: 8px 9px;
+  box-sizing: border-box;
+  width: 161px;
+  height: 88px;
+  list-style-type: none;
+  background: #FFFFFF;
+  box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.07);
+  border-radius: 5px;
+}
+
+.category-list__edit-list_hidden {
+  display: none;
+}
+
+.category-list__edit-list-item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  width: 143px;
+  height: 34px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 22px;
+  color: #4D5163;
+}
+
+.category-list__edit-list-item:last-child {
+  margin-bottom: 0px
+}
+
+.category-list__edit-list-item:hover {
+  background: rgba(48, 52, 70, 0.03);
+  border-radius: 5px;
 }
 
 .category-list__menu-dot {

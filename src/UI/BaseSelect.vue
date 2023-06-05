@@ -1,6 +1,7 @@
 <template>
 <section class="base-select"
-         @click="onInputClicked">
+         @click="onInputClicked"
+         v-click-outside="onCloseDropdown">
   <label class="base-select__label">
     <legend class="base-select__legend" :class="{
       'base-select__legend_decrease-legend': focused | isNotEmpty | isInputNotCorrect
@@ -20,7 +21,7 @@
   <div v-show="isOpened" class="base-select__dropdown">
     <p v-for="(option, index) in options"
        class="base-select__option "
-       @click="() => onOptionClicked(option)"
+       @click.stop="() => onOptionClicked(option)"
        v-bind:key="option + index">
       {{option}}
     </p>
@@ -30,7 +31,12 @@
 </template>
 
 <script>
+import vClickOutside from 'v-click-outside';
+
 export default {
+  directives: {
+    clickOutside: vClickOutside.directive,
+  },
   props: {
     legend: {
       type: String,
@@ -67,18 +73,20 @@ export default {
     },
     onBlur() {
       this.focused = false;
-      this.isOpened = false;
+      this.onCloseDropdown();
     },
     onInput(event) {
       this.$emit('input', event.target.value);
     },
     onOptionClicked(optionName) {
       this.$emit('input', optionName);
-      this.isOpened = false;
+      this.onCloseDropdown();
     },
     onInputClicked() {
-      debugger;
       this.isOpened = !this.isOpened;
+    },
+    onCloseDropdown() {
+      this.isOpened = false;
     },
   },
   computed: {
