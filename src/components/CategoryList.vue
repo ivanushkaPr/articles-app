@@ -52,10 +52,11 @@ import { mapActions } from 'vuex';
 import vClickOutside from 'v-click-outside';
 import findCategory from '../mixins/findCategory';
 import CategoryListArticle from './CategoryListArticle.vue';
+import countArticles from '../mixins/countArticles';
 
 export default {
   name: 'CategoryList',
-  mixins: [findCategory],
+  mixins: [findCategory, countArticles],
   directives: {
     clickOutside: vClickOutside.directive,
   },
@@ -124,7 +125,7 @@ export default {
   },
   computed: {
     getArticlesCounter() {
-      return this.articlesIds.length;
+      return this.articlesIds.length + this.countArticles(this.children);
     },
     getData() {
       return {
