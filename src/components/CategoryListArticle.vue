@@ -1,9 +1,10 @@
 <template>
-  <section class="category-list-article mr-24px ">
+  <section class="category-list-article mr-24px mb-24px">
     <div class="category-list-article__popularity mb-8px">
       <base-like-button :isChecked="isLiked"
                         :counter="likes"
                         @input="onChangeLikeCounter"/>
+      <base-edit-button/>
     </div>
     <img class="category-list-article__image" :src="img"/>
     <h3 class="category-list-article__headline">{{headline}}</h3>
@@ -68,6 +69,7 @@ export default {
   border-radius: 10px;
   box-sizing: border-box;
   width: 291px;
+  min-height: 295px;
 }
 
 .category-list-article__popularity {

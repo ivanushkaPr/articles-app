@@ -1,25 +1,31 @@
 <template>
   <div id="app">
-    <div v-if="isArticlesDownloaded" class="wrapper">
-      <div class="content">
+    <div v-if="isArticlesDownloaded" class="app__wrapper">
+      <div class="app__content">
         <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
         <the-delete-category-modal v-if="this.$store.state.deleteModal.isVisible"/>
         <the-header/>
         <div v-if="isCategoriesAdded">
-          <category-list v-for="(categorie, index) in renderedCategoriesData"
-                         :class="['mb-16px']"
-                         v-bind="categorie"
-                         :open="true"
-                         :key="index"/>
+          <div v-if="getSearchQuery.length === 0">
+            <category-list v-for="(category, index) in renderedCategoriesData"
+                           :class="['mb-16px']"
+                           v-bind="category"
+                           :open="true"
+                           :key="index"/>
+          </div>
+          <the-filtered-articles v-else-if="renderedArticlesData.length !== 0"
+                                 :articlesData="renderedArticlesData"
+                                 :articles-counter="searchResultArticles"/>
+          <the-nothing-found-stub v-else/>
         </div>
         <div v-else>
           <the-stub/>
         </div>
       </div>
 
-      <div v-if="isCategoriesAdded" class="footer">
-        <base-pagination :currentPage="currentPage"
-                         :pagesCounter="numberOfPages"
+      <div v-if="getPaginationVisibility" class="app__footer">
+        <base-pagination :currentPage="getCurrentPage"
+                         :pagesCounter="getNumberOfPages"
                          @pageChange="onPageChange"
                          @goBack="onDecrementPageCounter"
                          @goForward="onIncrementPageCounter"/>
@@ -38,6 +44,8 @@ import TheDeleteCategoryModal from './components/TheDeleteCategoryModal.vue';
 import TheHeader from './components/TheHeader.vue';
 import TheStub from './components/TheStub.vue';
 import CategoryList from './components/CategoryList.vue';
+import TheFilteredArticles from './components/TheFilteredArticles.vue';
+import TheNothingFoundStub from './components/TheNothingFoundStub.vue';
 import Preloader from './components/Preloader.vue';
 
 export default {
@@ -48,6 +56,8 @@ export default {
     TheHeader,
     TheStub,
     CategoryList,
+    TheFilteredArticles,
+    TheNothingFoundStub,
     Preloader,
   },
   data() {
@@ -56,6 +66,10 @@ export default {
       currentPage: 1,
       numberOfPages: null,
       renderedCategoriesData: null,
+      currentSearchResultsPage: 1,
+      searchResultsPages: null,
+      renderedArticlesData: null,
+      searchResultArticles: null,
     };
   },
   methods: {
@@ -75,32 +89,42 @@ export default {
       }
     },
     onPageChange(newCurrentPage) {
-      this.currentPage = newCurrentPage;
+      this[this.getChangedPageProp()] = newCurrentPage;
     },
     onDecrementPageCounter() {
-      this.currentPage -= 1;
+      this[this.getChangedPageProp()] -= 1;
     },
     onIncrementPageCounter() {
-      this.currentPage += 1;
+      this[this.getChangedPageProp()] += 1;
     },
-    collectRenderedCategories(newCurrentPage) {
+    getChangedPageProp() {
+      return !this.$store.state.searchQuery.length ? 'currentPage'
+        : 'currentSearchResultsPage';
+    },
+    collectRenderedData(currentPage, cardsPerPage, data) {
       // При загрузке страницы функция сработает дважды.
       // Необходимо добавить флаг или debounce, чтобы оно не запускалось дважды через watch - ы.
       // Тем не менее накладные расходы очень низкие(3 итерации),
       // поэтому считаю данную оптимизацию чрезмерной.
-      let start = (newCurrentPage - 1) * 3;
-      const end = newCurrentPage * this.$store.state.categoriesPerPage;
-      const renderedCategories = [];
+      let start = (currentPage - 1) * cardsPerPage;
+      const end = currentPage * cardsPerPage;
+      const renderData = [];
+
       for (; start < end; start += 1) {
-        const category = this.$store.state.categories[start];
+        const category = data[start];
         if (!category) {
           break;
         }
-        renderedCategories.push(category);
+        renderData.push(category);
       }
-
-      this.renderedCategoriesData = renderedCategories;
+      return renderData;
     },
+    countNumberOfPages(categories, elementsPerPage) {
+      return Math.ceil(categories.length / elementsPerPage);
+    },
+    ...mapGetters([
+      'getFilteredArticles',
+    ]),
   },
   computed: {
     ...mapGetters([
@@ -108,20 +132,71 @@ export default {
       'isCategoriesAdded',
       'getCategories',
       'getCategoriesPerPage',
+      'getSearchQuery',
     ]),
+    getCurrentPage() {
+      return !this.$store.state.searchQuery.length ? this.currentPage
+        : this.currentSearchResultsPage;
+    },
+    getNumberOfPages() {
+      return !this.$store.state.searchQuery.length ? this.numberOfPages : this.searchResultsPages;
+    },
+    getPaginationVisibility() {
+      return (this.isCategoriesAdded && this.isSearchQueryEmpty)
+        || (this.renderedArticlesData.length !== 0 && this.isSearchQueryEmpty !== 0);
+    },
+    isSearchQueryEmpty() {
+      return this.getSearchQuery.length === 0;
+    },
   },
   watch: {
     '$store.state.categories': {
       handler(newCategories) {
-        this.numberOfPages = Math.ceil(newCategories.length / this.$store.state.categoriesPerPage);
-        this.collectRenderedCategories(this.currentPage);
+        this.numberOfPages = this.countNumberOfPages(
+          newCategories,
+          this.$store.state.categoriesPerPage,
+        );
+        this.renderedCategoriesData = this.collectRenderedData(
+          this.currentPage,
+          this.$store.state.categoriesPerPage,
+          this.$store.state.categories,
+        );
       },
       immediate: true,
       deep: true,
     },
     currentPage: {
       handler(newCurrentPage) {
-        this.collectRenderedCategories(newCurrentPage);
+        this.renderedCategoriesData = this.collectRenderedData(
+          newCurrentPage,
+          this.$store.state.categoriesPerPage,
+          this.$store.state.categories,
+        );
+      },
+      immediate: true,
+    },
+    '$store.state.searchQuery': {
+      handler() {
+        const filteredArticles = this.getFilteredArticles();
+        this.searchResultsPages = this.countNumberOfPages(
+          filteredArticles,
+          this.$store.state.searchResultsPerPage,
+        );
+        this.searchResultArticles = filteredArticles.length;
+        this.renderedArticlesData = this.collectRenderedData(
+          1,
+          this.$store.state.searchResultsPerPage,
+          this.getFilteredArticles(),
+        );
+      },
+    },
+    currentSearchResultsPage: {
+      handler(newSearchResultPage) {
+        this.renderedArticlesData = this.collectRenderedData(
+          newSearchResultPage,
+          this.$store.state.searchResultsPerPage,
+          this.getFilteredArticles(),
+        );
       },
       immediate: true,
     },
@@ -129,10 +204,34 @@ export default {
   async mounted() {
     this.getArticles();
   },
+  updated() {
+    // К сожалению не работае в firefox и opera.
+    // Для них требуются более сложные танцы с бубнами.
+    if (CSS.highlights) {
+      const ranges = [];
+      const searchQuery = this.getSearchQuery.toLowerCase();
+      Array.from(document.body.querySelectorAll('.category-list-article__headline'))
+        .forEach((headline) => {
+          const textContent = headline.textContent.toLowerCase();
+          const index = textContent.indexOf(searchQuery);
+          if (index !== -1) {
+            const range = new Range();
+            debugger;
+            range.setStart(headline.firstChild, index);
+            range.setEnd(headline.firstChild, index + this.getSearchQuery.length);
+            ranges.push(range);
+          }
+        });
+      // eslint-disable-next-line
+      const highlight = new Highlight(...ranges);
+      CSS.highlights.set('articles-highlights', highlight);
+    }
+  },
 };
 </script>
 
 <style lang="scss">
+
 body {
   margin: 0px;
   font-family: 'Montserrat';
@@ -148,15 +247,15 @@ body {
   overflow: hidden;
 }
 
-.wrapper {
+.app__wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
-.content {
+.app__content {
   flex: 1 0 auto;
 }
-.footer {
+.app__footer {
   flex: 0 0 auto;
 }
 
@@ -189,4 +288,8 @@ body {
   }
 }
 
+::highlight(articles-highlights) {
+  background-color: yellow;
+  color: black;
+}
 </style>

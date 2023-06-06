@@ -3,22 +3,35 @@
     <base-action-button class="mr-16px" text="Создать категорию"
                         :is-add-button="true"
     @onButtonClicked="onOpenModal"/>
-    <base-input legend="Найти статью" type="search" v-model.trim="searchQuery"/>
+    <base-input legend="Найти статью" type="search"
+                :class="{'mr-16px': getSearchQuery.length !== 0 }"
+                @input="onInput"
+                :value="getSearchQuery"/>
+    <base-cancel-button v-if="getSearchQuery.length !== 0"
+                        text="Сбросить фильтры"
+                        @onButtonClicked="resetSearchQuery"
+    />
   </header>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+
 export default {
-  data() {
-    return {
-      searchQuery: '',
-    };
-  },
   methods: {
+    ...mapActions(['updateSearchQuery']),
     onOpenModal() {
-      debugger;
       this.$store.commit('modal/open');
     },
+    onInput(value) {
+      this.updateSearchQuery(value);
+    },
+    resetSearchQuery() {
+      this.updateSearchQuery('');
+    },
+  },
+  computed: {
+    ...mapGetters(['getSearchQuery']),
   },
 };
 </script>

@@ -5,7 +5,9 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    searchQuery: '',
     categoriesPerPage: 3,
+    searchResultsPerPage: 12,
     articles: [],
     categories: [{
       name: 'Категория 1',
@@ -56,6 +58,9 @@ export default new Vuex.Store({
     setCategories(state, categories) {
       state.categories = categories;
     },
+    setSearchQuery(state, value) {
+      state.searchQuery = value;
+    },
     addLike(state, index) {
       const newArticle = JSON.parse(JSON.stringify(state.articles[index]));
       newArticle.likes += 1;
@@ -91,6 +96,15 @@ export default new Vuex.Store({
     getEditedCategory(state) {
       return state.editedCategory;
     },
+    getSearchQuery(state) {
+      return state.searchQuery;
+    },
+    getFilteredArticles(state) {
+      const sqLowerCased = state.searchQuery.toLowerCase();
+      return state.articles.filter((article) => {
+        return article.headline.toLowerCase().indexOf(sqLowerCased) !== -1;
+      }).sort((articleA, articleB) => articleA > articleB);
+    },
   },
   actions: {
     addNewCategory(context, newCategories) {
@@ -101,6 +115,9 @@ export default new Vuex.Store({
     },
     deleteEditedCategory(context) {
       context.commit('deleteEditedCategory');
+    },
+    updateSearchQuery(context, value) {
+      context.commit('setSearchQuery', value);
     },
   },
   modules: {
