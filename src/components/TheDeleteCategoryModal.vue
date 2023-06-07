@@ -26,7 +26,7 @@ export default {
   },
   mixins: [findCategory, toggleBodyOverflow],
   methods: {
-    ...mapActions(['deleteModal/closeModal', 'addNewCategory']),
+    ...mapActions(['deleteModal/closeModal', 'addNewCategory', 'setEditedCategory']),
     copyObject(obj) {
       return JSON.parse(JSON.stringify(obj));
     },
@@ -41,6 +41,7 @@ export default {
       const { category, parent } = this.findCategory(categoriesCopy, this.getEditedCategoryName());
       const newCategoriesAfterDeletion = this.deleteCategory(categoriesCopy, parent, category);
       this.addNewCategory(newCategoriesAfterDeletion);
+      localStorage.setItem('categories', JSON.stringify(this.$store.state.categories));
       this['deleteModal/closeModal']();
     },
     deleteCategory(categoriesCopy, parentCategory, deletedCategory) {
@@ -64,6 +65,7 @@ export default {
   },
   beforeDestroy() {
     this.toggleBodyOverflow();
+    this.setEditedCategory(null);
   },
 };
 </script>

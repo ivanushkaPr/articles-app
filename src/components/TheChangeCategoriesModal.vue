@@ -90,7 +90,6 @@ export default {
         checkCategoryExistence: checkCategoryExistence('articlesOptions'),
       },
     };
-    debugger;
     if (this.lastAction === 'optionAdded') {
       validationsObject.searchQuery = {
         isArticleExists,

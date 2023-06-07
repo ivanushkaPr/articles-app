@@ -4,15 +4,20 @@ export function isNotEmpty(value) {
   return value !== '';
 }
 
-export function checkCategoryExistence(categoryData) {
-  debugger;
+export function checkCategoryExistence(categoryData, editedValue) {
   return function (value) {
-    return !this[categoryData].some((option) => option === value);
+    debugger;
+    let result = null;
+    return !this[categoryData].some((option) => {
+      if (editedValue && option === editedValue) {
+        result = false;
+      } else {
+        result = option === value;
+      }
+      return result;
+    });
   };
 }
-
-export const checkCategoryExistence2 = (data) => // eslint-disable-next-line
-  (value) => !data.some((option) => option === value);
 
 export function checkParentExistence(value) {
   return !helpers.req(value) || !!this.parentOptions.some((option) => option === value);

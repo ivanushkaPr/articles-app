@@ -10,7 +10,7 @@
                   :error-message="getCategoryNameErrorMessage"
                   :value="categoryName"
                   @input="onNameChange"/>
-      <base-select class="mb-16px"
+      <base-select v-if="parentOptions.length > 0"  class="mb-16px"
                    legend="Родительская карточка (необязательно)"
                    :value="selectedParent"
                    @input="onParentInputChange"
@@ -81,6 +81,7 @@ export default {
       isOptionAdded: false,
       isSubmitted: false,
       lastAction: null,
+      isEdited: false,
     };
   },
   validations() {
@@ -100,6 +101,14 @@ export default {
       validationsObject.searchQuery = {
         isArticleExists,
         isArticleSelected,
+      };
+    } else if (this.isEdited) {
+      validationsObject.categoryName = {
+        isNotEmpty,
+        checkCategoryExistence: checkCategoryExistence(
+          'parentOptions',
+          this.getEditedCategory().category.name,
+        ),
       };
     }
     return validationsObject;
@@ -141,15 +150,68 @@ export default {
       return {
         name: this.categoryName,
         articlesIds: this.marArticlesNamesToId(this.articlesSelectedOptions),
-        children: [],
+        children: this.isEdited ? [...this.getEditedCategory().category.children] : [],
       };
     },
     copyObject(obj) {
       return JSON.parse(JSON.stringify(obj));
     },
     insertCategory(categories, category) {
+      let result = null;
+      if (this.isEdited) {
+        result = this.insertEditedCategory(categories, category);
+      } else {
+        result = this.insertNewCategory(categories, category);
+      }
+      return result;
+    },
+    isCategoryHaveParent() {
+      return this.selectedParent;
+    },
+    insertEditedCategory(categories, category) {
       const categoriesCopy = this.copyObject(categories);
+      return this.isCategoryHaveParent() ? this.insertAsChildCategory(categoriesCopy)
+        : this.insertAsRootElement(categoriesCopy, category);
+    },
+    insertAsRootElement(categoriesCopy, category) {
+      const categoryPrevName = this.getEditedCategory().category.name;
+      const {
+        parent: parentTreeNode,
+      } = this.findCategory(categoriesCopy, categoryPrevName);
+      if (parentTreeNode) {
+        const oldCategoryIndex = parentTreeNode.children.findIndex((categoryCopy) => {
+          return categoryCopy.name === categoryPrevName;
+        });
+        const transferredTreeNode = parentTreeNode.children.splice(oldCategoryIndex, 1);
+        categoriesCopy.push(transferredTreeNode[0]);
+      } else {
+        const oldCategoryIndex = categoriesCopy.findIndex((categoryCopy) => {
+          return categoryCopy.name === categoryPrevName;
+        });
+        categoriesCopy.splice(oldCategoryIndex, 1, category);
+      }
+      return categoriesCopy;
+    },
+    insertAsChildCategory(categoriesCopy) {
+      const { parent: oldParent } = this.findCategory(
+        categoriesCopy,
+        this.getEditedCategory().category.name,
+      );
+      const { category: newParentNode } = this.findCategory(
+        categoriesCopy,
+        this.selectedParent,
+      );
 
+      const parentProperty = oldParent ? oldParent.children : categoriesCopy;
+      const indexOfTransferredTreeNode = parentProperty.findIndex((categoryCopy) => {
+        return categoryCopy.name === this.getEditedCategory().category.name;
+      });
+      const transferredNode = parentProperty.splice(indexOfTransferredTreeNode, 1);
+      newParentNode.children.push(transferredNode[0]);
+      return categoriesCopy;
+    },
+    insertNewCategory(categories, category) {
+      const categoriesCopy = this.copyObject(categories);
       if (this.selectedParent) {
         const categoryData = this.findCategory(categoriesCopy, this.selectedParent);
         categoryData.category.children.push(category);
@@ -159,7 +221,6 @@ export default {
       }
       return categoriesCopy;
     },
-
     onSubmitForm() {
       this.lastAction = 'formSubmitted';
       this.$v.$touch();
@@ -187,8 +248,8 @@ export default {
         return acc;
       }, storage);
     },
-    ...mapActions(['addNewCategory']),
-    ...mapGetters(['getCategories']),
+    ...mapActions(['addNewCategory', 'setEditedCategory']),
+    ...mapGetters(['getCategories', 'getEditedCategory']),
   },
   computed: {
     ...mapState({
@@ -246,6 +307,7 @@ export default {
   beforeDestroy() {
     window.removeEventListener('keypress', this.onCloseModalViaKeyboard);
     this.toggleBodyOverflow();
+    this.setEditedCategory(null);
   },
   watch: {
     '$store.state.articles': {
@@ -272,6 +334,7 @@ export default {
         this.articlesSelectedOptions = newEditedCategory.category.articlesIds.map((id) => {
           return articles[id - 1].headline;
         });
+        this.isEdited = true;
       },
       immediate: true,
     },

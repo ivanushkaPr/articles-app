@@ -4,15 +4,17 @@ export default {
       return this.iterateCategories(categories, name);
     },
     iterateCategories(categories, name, parent) {
+      debugger;
       let target = null;
       for (let counter = 0; counter < categories.length; counter += 1) {
         const category = categories[counter];
         if (category.name === name) {
+          debugger;
           target = { category, parent };
           break;
         }
 
-        if (category.children.length > 0) {
+        if (category.children.length > 0 && !target) {
           target = this.iterateCategories(category.children, name, category);
         }
       }

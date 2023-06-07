@@ -7,8 +7,7 @@
         <the-delete-category-modal v-if="this.$store.state.deleteModal.isVisible"/>
         <the-change-categories-modal v-if="this['changeModal/getModalState']()"/>
         <the-header/>
-        <div v-if="isCategoriesAdded">
-          <div v-if="getSearchQuery.length === 0">
+          <div v-if="isCategoriesAdded && getSearchQuery.length === 0">
             <category-list v-for="(category, index) in renderedCategoriesData"
                            :class="['mb-16px']"
                            v-bind="category"
@@ -18,12 +17,9 @@
           <the-filtered-articles v-else-if="renderedArticlesData.length !== 0"
                                  :articlesData="renderedArticlesData"
                                  :articles-counter="searchResultArticles"/>
-          <the-nothing-found-stub v-else/>
+          <the-nothing-found-stub v-else-if="renderedArticlesData.length === 0 && getSearchQuery.length > 0"/>
+          <the-stub v-else/>
         </div>
-        <div v-else>
-          <the-stub/>
-        </div>
-      </div>
 
       <div v-if="getPaginationVisibility" class="app__footer">
         <base-pagination :currentPage="getCurrentPage"
@@ -74,7 +70,7 @@ export default {
       renderedCategoriesData: null,
       currentSearchResultsPage: 1,
       searchResultsPages: null,
-      renderedArticlesData: null,
+      renderedArticlesData: [],
       searchResultArticles: null,
     };
   },
@@ -119,10 +115,11 @@ export default {
 
       for (; start < end; start += 1) {
         const category = data[start];
-        if (!category) {
+        const categoryCopy = category ? JSON.parse(JSON.stringify(category)) : undefined;
+        if (!categoryCopy) {
           break;
         }
-        renderData.push(category);
+        renderData.push(categoryCopy);
       }
       return renderData;
     },
@@ -151,6 +148,7 @@ export default {
       return !this.$store.state.searchQuery.length ? this.numberOfPages : this.searchResultsPages;
     },
     getPaginationVisibility() {
+      debugger;
       return (this.isCategoriesAdded && this.isSearchQueryEmpty)
         || (this.renderedArticlesData.length !== 0 && this.isSearchQueryEmpty !== 0);
     },
@@ -185,7 +183,12 @@ export default {
       immediate: true,
     },
     '$store.state.searchQuery': {
-      handler() {
+      handler(newSearchQuery) {
+        if (newSearchQuery === '') {
+          this.renderedArticlesData = [];
+          this.searchResultArticles = [];
+          return;
+        }
         const filteredArticles = this.getFilteredArticles();
         this.searchResultsPages = this.countNumberOfPages(
           filteredArticles,
@@ -208,6 +211,14 @@ export default {
         );
       },
       immediate: true,
+    },
+    numberOfPages: {
+      handler(newNumberOfPages, oldNumberOfpages) {
+        debugger;
+        if (newNumberOfPages < oldNumberOfpages && this.currentPage > 1) {
+          this.currentPage = newNumberOfPages;
+        }
+      },
     },
   },
   async mounted() {

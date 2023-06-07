@@ -1,6 +1,6 @@
 <template>
   <ul class="category-list">
-    <header class="category-list__header">
+    <header class="category-list__header" :class="{'mb-0px': getArticlesLen }">
       <div class="category-list__info">
         <h2 class="category-list__headline">{{name}}</h2>
         <sup class="category-list__counter">({{getArticlesCounter}})</sup>
@@ -99,6 +99,7 @@ export default {
   methods: {
     ...mapActions(['modal/openModal', 'setEditedCategory', 'deleteModal/openModal']),
     onOpenModal() {
+      debugger;
       const selectedCategory = this.findCategory(this.$store.state.categories, this.name);
       this.setEditedCategory(selectedCategory);
       this.onToggleEditMenu();
@@ -122,10 +123,16 @@ export default {
     onClickOutsideEditMenu() {
       this.isEditMenuShowed = false;
     },
+    copyObject(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    },
   },
   computed: {
+    getArticlesLen() {
+      return this.articlesIds.length === 0;
+    },
     getArticlesCounter() {
-      return this.articlesIds.length + this.countArticles(this.children);
+      return this.articlesIds.length + this.countArticles(this.copyObject(this.children));
     },
     getData() {
       return {
