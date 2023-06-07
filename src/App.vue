@@ -4,6 +4,7 @@
       <div class="app__content">
         <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
         <the-delete-category-modal v-if="this.$store.state.deleteModal.isVisible"/>
+        <the-change-categories-modal v-if="this['changeModal/getModalState']()"/>
         <the-header/>
         <div v-if="isCategoriesAdded">
           <div v-if="getSearchQuery.length === 0">
@@ -38,9 +39,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import TheAddCategoryModal from './components/TheAddCategoryModal.vue';
 import TheDeleteCategoryModal from './components/TheDeleteCategoryModal.vue';
+import TheChangeCategoriesModal from './components/TheChangeCategoriesModal.vue';
 import TheHeader from './components/TheHeader.vue';
 import TheStub from './components/TheStub.vue';
 import CategoryList from './components/CategoryList.vue';
@@ -53,6 +55,7 @@ export default {
   components: {
     TheAddCategoryModal,
     TheDeleteCategoryModal,
+    TheChangeCategoriesModal,
     TheHeader,
     TheStub,
     CategoryList,
@@ -73,10 +76,11 @@ export default {
     };
   },
   methods: {
-    restoreStore() {
+    restoreStoreLastState() {
+      debugger;
       const categories = JSON.parse(localStorage.getItem('categories'));
       if (categories) {
-        this.$store.commit('setCategories', categories);
+        this.addNewCategory(categories);
       }
     },
     async getArticles() {
@@ -122,8 +126,10 @@ export default {
     countNumberOfPages(categories, elementsPerPage) {
       return Math.ceil(categories.length / elementsPerPage);
     },
+    ...mapActions(['addNewCategory']),
     ...mapGetters([
       'getFilteredArticles',
+      'changeModal/getModalState',
     ]),
   },
   computed: {
@@ -203,6 +209,7 @@ export default {
   },
   async mounted() {
     this.getArticles();
+    this.restoreStoreLastState();
   },
   updated() {
     // К сожалению не работае в firefox и opera.

@@ -46,6 +46,8 @@ export default new Vuex.Store({
       children: [],
     }],
     editedCategory: null,
+    articleParentCategories: null,
+    editedArticleID: null,
   },
   mutations: {
     setArticles(state, articles) {
@@ -79,6 +81,12 @@ export default new Vuex.Store({
     deleteEditedCategory(state) {
       state.editedCategory = null;
     },
+    changeArticleParentCategory(state, value) {
+      state.articleParentCategories = value;
+    },
+    changeEditedArticleID(state, value) {
+      state.editedArticleID = value;
+    },
   },
   getters: {
     isArticlesDownloaded(state) {
@@ -105,6 +113,9 @@ export default new Vuex.Store({
         return article.headline.toLowerCase().indexOf(sqLowerCased) !== -1;
       }).sort((articleA, articleB) => articleA > articleB);
     },
+    getEditedArticleID(state) {
+      return state.editedArticleID;
+    },
   },
   actions: {
     addNewCategory(context, newCategories) {
@@ -118,6 +129,12 @@ export default new Vuex.Store({
     },
     updateSearchQuery(context, value) {
       context.commit('setSearchQuery', value);
+    },
+    setArticleParentCategories(context, value) {
+      context.commit('changeArticleParentCategory', value);
+    },
+    setEditedArticleID(context, value) {
+      context.commit('changeEditedArticleID', value);
     },
   },
   modules: {
@@ -151,6 +168,33 @@ export default new Vuex.Store({
         },
         open(state) {
           state.isVisible = true;
+        },
+      },
+      actions: {
+        openModal(context) {
+          context.commit('open');
+        },
+        closeModal(context) {
+          context.commit('close');
+        },
+      },
+    },
+    changeModal: {
+      namespaced: true,
+      state: {
+        isVisible: false,
+      },
+      mutations: {
+        close(state) {
+          state.isVisible = false;
+        },
+        open(state) {
+          state.isVisible = true;
+        },
+      },
+      getters: {
+        getModalState(state) {
+          return state.isVisible;
         },
       },
       actions: {

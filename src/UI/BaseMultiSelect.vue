@@ -1,6 +1,6 @@
 <template>
   <section v-click-outside="onCloseDropdown" class="base-multi-select">
-    <label class="base-multi-select__label">
+    <label class="base-multi-select__label" :class="{'mb-16px': isSlotVisible}">
       <legend class="base-multi-select__legend" :class="{
       'base-multi-select__legend_decrease-legend': focused | isNotEmpty | isInputNotCorrect
     }"> {{legend}} </legend>
@@ -21,13 +21,22 @@
     <div v-show="isOpened" class="base-multi-select__dropdown">
       <p v-for="(option, index) in options"
          class="base-multi-select__option "
-         @click="() => onOptionClicked(option)"
+         @click="() => onOptionClicked(option, index)"
          :class="{'base-multi-select__option_highlighted ': optionHighlightedIndex === index}"
          v-bind:key="option + index">
         {{option}}
       </p>
     </div>
     <p v-if="isInputNotCorrect" class="base-multi-select__error-message"> {{errorMessage}} </p>
+
+    <slot :slotInputHandler="onSlotInputChange"
+          :slotInputValue="slotValue"
+          :slotError="slotError"
+          :slotErrorMessage="slotErrorMessage"
+          :slotVisibility="isSlotVisible"
+          :slotHideSlotContent="onHideSlotContent"
+          :slotButtonHandler="onSlotButtonClicked"
+    ></slot>
 
     <div class="base-multiselect__selected-options">
       <div class="base-multiselect__selected-option mr-16px"
@@ -57,6 +66,18 @@ export default {
       type: String,
       required: true,
     },
+    slotValue: {
+      type: String,
+      required: false,
+    },
+    slotError: {
+      type: Boolean,
+      required: false,
+    },
+    slotErrorMessage: {
+      type: String,
+      required: false,
+    },
     error: {
       type: Boolean,
       required: false,
@@ -84,6 +105,7 @@ export default {
     return {
       isOpened: false,
       focused: false,
+      isSlotVisible: false,
     };
   },
   methods: {
@@ -93,6 +115,13 @@ export default {
     onBlur() {
       this.focused = false;
     },
+    onSlotInputChange(value) {
+      this.$emit('slotInputChange', value);
+    },
+    onSlotButtonClicked() {
+      this.$emit('slotButtonClicked');
+      this.isSlotVisible = false;
+    },
     onInput(event) {
       this.$emit('input', event.target.value);
     },
@@ -100,9 +129,17 @@ export default {
       this.$emit('option-selected', event.target.value);
       this.onCloseDropdown();
     },
-    onOptionClicked(optionName) {
-      this.$emit('option-selected', optionName);
+    onOptionClicked(optionName, index) {
+      if (index === 0 && this.slotValue !== undefined) {
+        this.isSlotVisible = true;
+        this.$emit('option-selected', '');
+      } else {
+        this.$emit('option-selected', optionName);
+      }
       this.onCloseDropdown();
+    },
+    onHideSlotContent() {
+      // this.isSlotVisible = false;
     },
     onInputClicked() {
       this.isOpened = !this.isOpened;

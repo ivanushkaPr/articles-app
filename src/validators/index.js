@@ -4,9 +4,15 @@ export function isNotEmpty(value) {
   return value !== '';
 }
 
-export function checkCategoryExistence(value) {
-  return !this.parentOptions.some((option) => option === value);
+export function checkCategoryExistence(categoryData) {
+  debugger;
+  return function (value) {
+    return !this[categoryData].some((option) => option === value);
+  };
 }
+
+export const checkCategoryExistence2 = (data) => // eslint-disable-next-line
+  (value) => !data.some((option) => option === value);
 
 export function checkParentExistence(value) {
   return !helpers.req(value) || !!this.parentOptions.some((option) => option === value);
@@ -29,5 +35,6 @@ export function isArticleSelected(value) {
 }
 
 export function isAtLeastOneArticleSelected() {
+  debugger;
   return this.articlesSelectedOptions.length > 0;
 }

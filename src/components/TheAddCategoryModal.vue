@@ -47,11 +47,12 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapActions, mapGetters } from 'vuex';
 import { debounce } from 'lodash';
 import vClickOutside from 'v-click-outside';
 import findCategory from '../mixins/findCategory';
 import toggleBodyOverflow from '../mixins/toggleBodyOverflow';
+import BaseMultiselectHandlers from '../mixins/BaseMultiselectHandlers';
 
 import {
   isNotEmpty,
@@ -59,7 +60,6 @@ import {
   isOptionStartWithQuery,
   isArticleExists,
   isArticleSelected,
-  isAtLeastOneArticleSelected,
   checkCategoryExistence,
 } from '../validators';
 
@@ -67,7 +67,7 @@ export default {
   directives: {
     clickOutside: vClickOutside.directive,
   },
-  mixins: [findCategory, toggleBodyOverflow],
+  mixins: [findCategory, toggleBodyOverflow, BaseMultiselectHandlers],
   data() {
     return {
       categoryName: '',
@@ -87,7 +87,7 @@ export default {
     const validationsObject = {
       categoryName: {
         isNotEmpty,
-        checkCategoryExistence,
+        checkCategoryExistence: checkCategoryExistence('parentOptions'),
       },
       selectedParent: {
         checkParentExistence,
@@ -100,10 +100,6 @@ export default {
       validationsObject.searchQuery = {
         isArticleExists,
         isArticleSelected,
-      };
-    } else if (this.lastAction === 'formSubmitted') {
-      validationsObject.searchQuery = {
-        isAtLeastOneArticleSelected,
       };
     }
     return validationsObject;
@@ -120,11 +116,6 @@ export default {
     checkParentExistence: debounce(function (value) {
       this.selectedParentError = !this.parentOptions.find((option) => option.indexOf(value));
     }, 100),
-    onArticlesInputChange(value) {
-      this.lastAction = 'inputChange';
-      this.searchQuery = value;
-      this.$v.searchQuery.$touch();
-    },
     onArticleSelected(value) {
       this.lastAction = 'optionAdded';
       this.searchQuery = value;
@@ -135,11 +126,6 @@ export default {
         this.articlesSelectedOptions.sort();
         this.searchQuery = '';
       }
-    },
-    onArticleUnselected(value) {
-      this.lastAction = 'optionAdded';
-      const selectedOptionIndex = this.articlesSelectedOptions.indexOf(value);
-      this.articlesSelectedOptions.splice(selectedOptionIndex, 1);
     },
     onCloseModal() {
       this.$store.commit('deleteEditedCategory');
@@ -157,9 +143,6 @@ export default {
         articlesIds: this.marArticlesNamesToId(this.articlesSelectedOptions),
         children: [],
       };
-    },
-    getCategories() {
-      return this.$store.getters.getCategories;
     },
     copyObject(obj) {
       return JSON.parse(JSON.stringify(obj));
@@ -205,6 +188,7 @@ export default {
       }, storage);
     },
     ...mapActions(['addNewCategory']),
+    ...mapGetters(['getCategories']),
   },
   computed: {
     ...mapState({
@@ -212,12 +196,6 @@ export default {
         return state.articles;
       },
     }),
-    firstArticleThatContainsQuery() {
-      if (!this.searchQuery) {
-        return -1;
-      }
-      return this.articlesOptions.findIndex((article) => article.includes(this.searchQuery));
-    },
     getCategoryNameErrorMessage() {
       const errors = {
         isNotEmpty: 'Поле обязательно к заполнению',
@@ -246,7 +224,6 @@ export default {
         isArticleExists: 'Нет такой статьи',
         isArticleSelected: 'Статья уже выбрана',
         isNotEmpty: 'Поле обязательно к заполнению',
-        isAtLeastOneArticleSelected: 'Выберите хотя бы одну статью',
       };
 
       const errorKey = [
@@ -254,7 +231,6 @@ export default {
         'isNotEmpty',
         'isArticleExists',
         'isArticleSelected',
-        'isAtLeastOneArticleSelected',
       ].find((key) => {
         return this.$v.searchQuery[key] === false;
       });

@@ -4,7 +4,7 @@
     'base-action-button_add-icon': isAddButton,
     'base-action-button_bg': bg,
   }"
-  @click="(e) => $emit('onButtonClicked', e)">
+  @click="(e) => $emit('onButtonClicked', e)" :disabled="disabled">
     {{text}}
   </button>
 </template>
@@ -25,6 +25,11 @@ export default {
       default: false,
     },
     isAddButton: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       required: false,
       default: false,

@@ -4,7 +4,7 @@
       <base-like-button :isChecked="isLiked"
                         :counter="likes"
                         @input="onChangeLikeCounter"/>
-      <base-edit-button/>
+      <base-edit-button @onButtonClicked="onShowChangeModal"/>
     </div>
     <img class="category-list-article__image" :src="img"/>
     <h3 class="category-list-article__headline">{{headline}}</h3>
@@ -13,8 +13,12 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+import findAllParentDirectories from '../mixins/findAllParentDirectories';
+
 export default {
   name: 'CategoryListArticle',
+  mixins: [findAllParentDirectories],
   props: {
     headline: {
       type: String,
@@ -52,6 +56,14 @@ export default {
       const operation = this.isChecked ? 'addLike' : 'removeLike';
       this.$store.commit(operation, this.id - 1);
     },
+    onShowChangeModal() {
+      const categoryNames = this.findAllParentDirectories(this.getCategories(), this.id);
+      this.setArticleParentCategories(categoryNames);
+      this.setEditedArticleID(this.id);
+      this['changeModal/openModal']();
+    },
+    ...mapActions(['changeModal/openModal', 'setArticleParentCategories', 'setEditedArticleID']),
+    ...mapGetters(['getCategories']),
   },
   watch: {
     isLiked(newValue) {
