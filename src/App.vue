@@ -2,6 +2,7 @@
   <div id="app">
     <div v-if="isArticlesDownloaded" class="app__wrapper">
       <div class="app__content">
+        <the-sidebar/>
         <the-add-category-modal v-if="this.$store.state.modal.isVisible"/>
         <the-delete-category-modal v-if="this.$store.state.deleteModal.isVisible"/>
         <the-change-categories-modal v-if="this['changeModal/getModalState']()"/>
@@ -43,6 +44,7 @@ import { mapGetters, mapActions } from 'vuex';
 import TheAddCategoryModal from './components/TheAddCategoryModal.vue';
 import TheDeleteCategoryModal from './components/TheDeleteCategoryModal.vue';
 import TheChangeCategoriesModal from './components/TheChangeCategoriesModal.vue';
+import TheSidebar from './components/TheSideBar.vue';
 import TheHeader from './components/TheHeader.vue';
 import TheStub from './components/TheStub.vue';
 import CategoryList from './components/CategoryList.vue';
@@ -56,6 +58,7 @@ export default {
     TheAddCategoryModal,
     TheDeleteCategoryModal,
     TheChangeCategoriesModal,
+    TheSidebar,
     TheHeader,
     TheStub,
     CategoryList,
