@@ -22,7 +22,7 @@
         </div>
 
       <div v-if="getPaginationVisibility" class="app__footer">
-        <base-pagination :currentPage="getCurrentPage"
+        <the-pagination :currentPage="getCurrentPage"
                          :pagesCounter="getNumberOfPages"
                          @pageChange="onPageChange"
                          @goBack="onDecrementPageCounter"
@@ -30,23 +30,24 @@
       </div>
     </div>
     <div v-else>
-      <preloader/>
+      <the-preloader/>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import TheAddCategoryModal from './components/TheAddCategoryModal.vue';
-import TheDeleteCategoryModal from './components/TheDeleteCategoryModal.vue';
-import TheChangeCategoriesModal from './components/TheChangeCategoriesModal.vue';
+import TheAddCategoryModal from './containers/TheAddCategoryModal.vue';
+import TheDeleteCategoryModal from './containers/TheDeleteCategoryModal.vue';
+import TheChangeCategoriesModal from './containers/TheChangeCategoriesModal.vue';
 import TheSidebar from './components/TheSideBar.vue';
 import TheHeader from './components/TheHeader.vue';
 import TheStub from './components/TheStub.vue';
 import CategoryList from './components/CategoryList.vue';
 import TheFilteredArticles from './components/TheFilteredArticles.vue';
 import TheNothingFoundStub from './components/TheNothingFoundStub.vue';
-import Preloader from './components/Preloader.vue';
+import ThePagination from './components/ThePagination.vue';
+import ThePreloader from './components/ThePreloader.vue';
 
 export default {
   name: 'App',
@@ -60,7 +61,8 @@ export default {
     CategoryList,
     TheFilteredArticles,
     TheNothingFoundStub,
-    Preloader,
+    ThePreloader,
+    ThePagination,
   },
   data() {
     return {

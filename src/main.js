@@ -10,7 +10,6 @@ import BaseMultiSelect from './UI/BaseMultiSelect.vue';
 import BaseCancelButton from './UI/BaseCancelButton.vue';
 import BaseLikeButton from './UI/BaseLikeButton.vue';
 import BaseEditButton from './UI/BaseEditButton.vue';
-import BasePagination from './UI/BasePagination.vue';
 
 Vue.use(Vuelidate);
 Vue.use(vClickOutside);
@@ -21,7 +20,6 @@ Vue.component('BaseMultiSelect', BaseMultiSelect);
 Vue.component('BaseCancelButton', BaseCancelButton);
 Vue.component('BaseLikeButton', BaseLikeButton);
 Vue.component('BaseEditButton', BaseEditButton);
-Vue.component('BasePagination', BasePagination);
 Vue.config.productionTip = false;
 
 new Vue({
