@@ -1,7 +1,8 @@
 <template>
   <section v-click-outside="onCloseDropdown" class="base-multi-select">
     <label class="base-multi-select__label" :class="{'mb-16px': isSlotVisible}">
-      <legend class="base-multi-select__legend" :class="{
+      <legend class="base-multi-select__legend"
+              :class="{
       'base-multi-select__legend_decrease-legend': focused | isNotEmpty | isInputNotCorrect
     }"> {{legend}} </legend>
       <input @focus="onFocus"
@@ -164,6 +165,13 @@ export default {
       if (newValue === '') {
         this.isOpened = false;
       } else {
+        this.isOpened = true;
+      }
+    },
+    error(newError, oldError) {
+      if (newError && this.isOpened) {
+        this.isOpened = false;
+      } else if (!newError && oldError && !this.isOpened) {
         this.isOpened = true;
       }
     },

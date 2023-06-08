@@ -1,12 +1,15 @@
 export default {
   methods: {
     onArticlesInputChange(value) {
+      this.$v.searchQuery.$reset();
       this.lastAction = 'inputChange';
       this.searchQuery = value;
-      this.$v.searchQuery.$touch();
+      if (this.searchQueryTimer) {
+        clearTimeout(this.searchQueryTimer);
+      }
+      this.searchQueryTimer = setTimeout(() => this.$v.searchQuery.$touch(), 1000);
     },
     onArticleSelected(value) {
-      debugger;
       this.lastAction = 'optionAdded';
       this.searchQuery = value;
       this.$v.searchQuery.$touch();
@@ -39,8 +42,5 @@ export default {
       }
       return this.articlesOptions.findIndex((article) => article.includes(this.searchQuery));
     },
-  },
-  watch: {
-
   },
 };

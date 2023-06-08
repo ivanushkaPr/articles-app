@@ -1,6 +1,5 @@
 <template>
 <section class="base-select"
-         @click="onInputClicked"
          v-click-outside="onCloseDropdown">
   <label class="base-select__label">
     <legend class="base-select__legend" :class="{
@@ -16,11 +15,13 @@
            type="text"/>
     <button class="base-select__button"
             type="button"
+            @click="onInputClicked"
             :class="{'base-select__button_rotated': isOpened}"></button>
   </label>
   <div v-show="isOpened" class="base-select__dropdown">
     <p v-for="(option, index) in options"
-       class="base-select__option "
+       class="base-select__option"
+       :class="{'base-select__option_highlighted': optionHighlightedIndex === index}"
        @click.stop="() => onOptionClicked(option)"
        v-bind:key="option + index">
       {{option}}
@@ -60,6 +61,10 @@ export default {
       type: Array,
       required: true,
     },
+    optionHighlightedIndex: {
+      type: Number,
+      required: true,
+    },
   },
   data() {
     return {
@@ -95,6 +100,22 @@ export default {
     },
     isInputNotCorrect() {
       return this.error;
+    },
+  },
+  watch: {
+    value(newValue) {
+      if (newValue === '') {
+        this.isOpened = false;
+      } else if (this.focused) {
+        this.isOpened = true;
+      }
+    },
+    error(newError, oldError) {
+      if (newError && this.isOpened) {
+        this.isOpened = false;
+      } else if (!newError && oldError && !this.isOpened) {
+        this.isOpened = true;
+      }
     },
   },
 };
@@ -231,4 +252,8 @@ export default {
   color: hsla(4, 87%, 55%, 1);
 }
 
+.base-select__option_highlighted {
+  background: rgba(48, 52, 70, 0.03);
+  border-radius: 5px;
+}
 </style>

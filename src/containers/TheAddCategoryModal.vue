@@ -17,6 +17,7 @@
                    :error="$v.selectedParent.$error"
                    :error-message="selectedParentErrorMessage"
                    :options="parentOptions"
+                   :option-highlighted-index="firstOptionThatContainsParent"
       />
       <base-multi-select legend="Вложенные статьи"
                          :value="searchQuery"
@@ -37,6 +38,7 @@
         <BaseActionButton class="mr-24px"
                           text="Сохранить"
                           type="submit"
+                          :disabled="categoryName && $v.categoryName.$error"
                           :bg="true"/>
         <BaseCancelButton @onButtonClicked="onCloseModal"
                           text="Отмена"
@@ -48,7 +50,6 @@
 
 <script>
 import { mapState, mapActions, mapGetters } from 'vuex';
-import { debounce } from 'lodash';
 import vClickOutside from 'v-click-outside';
 import findCategory from '../mixins/findCategory';
 import toggleBodyOverflow from '../mixins/toggleBodyOverflow';
@@ -74,10 +75,12 @@ export default {
       selectedParent: '',
       selectedParentErrorMessage: 'Нет такой категории',
       parentOptions: [],
+      parentTimer: null,
       searchQuery: '',
       selectedArticlesError: false,
       articlesOptions: [],
       articlesSelectedOptions: [],
+      searchQueryTimer: null,
       isOptionAdded: false,
       isSubmitted: false,
       lastAction: null,
@@ -110,6 +113,8 @@ export default {
           this.getEditedCategory().category.name,
         ),
       };
+    } else if (this.lastAction === 'formSubmitted') {
+      validationsObject.searchQuery = {};
     }
     return validationsObject;
   },
@@ -119,12 +124,16 @@ export default {
       this.$v.categoryName.$touch();
     },
     onParentInputChange(value) {
+      this.$v.selectedParent.$reset();
       this.selectedParent = value;
+      if (this.parentTimer) {
+        clearTimeout(this.parentTimer);
+      }
+      this.parentTimer = setTimeout(() => this.onSelectedParentTouch(), 1000);
+    },
+    onSelectedParentTouch() {
       this.$v.selectedParent.$touch();
     },
-    checkParentExistence: debounce(function (value) {
-      this.selectedParentError = !this.parentOptions.find((option) => option.indexOf(value));
-    }, 100),
     onArticleSelected(value) {
       this.lastAction = 'optionAdded';
       this.searchQuery = value;
@@ -281,7 +290,7 @@ export default {
     },
     getSearchQueryErrorMessage() {
       const errors = {
-        isOptionStartWithQuery: 'Поле не может быть пустым',
+        isOptionStartWithQuery: 'Нет такой статьи',
         isArticleExists: 'Нет такой статьи',
         isArticleSelected: 'Статья уже выбрана',
         isNotEmpty: 'Поле обязательно к заполнению',
@@ -297,6 +306,12 @@ export default {
       });
 
       return errors[errorKey];
+    },
+    firstOptionThatContainsParent() {
+      if (!this.selectedParent) {
+        return -1;
+      }
+      return this.parentOptions.findIndex((pOption) => pOption.includes(this.selectedParent));
     },
   },
   mounted() {
@@ -334,6 +349,8 @@ export default {
         this.articlesSelectedOptions = newEditedCategory.category.articlesIds.map((id) => {
           return articles[id - 1].headline;
         });
+        const indexOfSelf = this.parentOptions.findIndex((option) => option === this.categoryName);
+        this.parentOptions.splice(indexOfSelf, 1);
         this.isEdited = true;
       },
       immediate: true,

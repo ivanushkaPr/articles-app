@@ -95,6 +95,8 @@ export default {
         isArticleExists,
         isArticleSelected,
       };
+    } else if (this.lastAction === 'formSubmitted') {
+      validationsObject.searchQuery = {};
     }
     return validationsObject;
   },
